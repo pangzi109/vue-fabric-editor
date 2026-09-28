@@ -31,18 +31,18 @@ const repleace = async () => {
   if (activeObject && activeObject.type === 'image') {
     // 图片
     const [file] = await selectFiles({ accept: 'image/*', multiple: false });
+    if (!file) return;
     // 转字符串
     const fileStr = await getImgStr(file);
     // 字符串转El
     const imgEl = await insertImgFile(fileStr);
-    const width = activeObject.get('width');
-    const height = activeObject.get('height');
-    const scaleX = activeObject.get('scaleX');
-    const scaleY = activeObject.get('scaleY');
+    const width = activeObject.getScaledWidth();
+    const height = activeObject.getScaledHeight();
     activeObject.setSrc(imgEl.src, () => {
-      activeObject.set('scaleX', (width * scaleX) / imgEl.width);
-      activeObject.set('scaleY', (height * scaleY) / imgEl.height);
+      const scale = Math.min(width / imgEl.width, height / imgEl.height);
+      activeObject.set({ scaleX: scale, scaleY: scale });
       activeObject.set('originSrc', imgEl.src);
+      activeObject.setCoords();
       canvasEditor.canvas.renderAll();
     });
     imgEl.remove();

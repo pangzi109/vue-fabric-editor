@@ -10,6 +10,7 @@
       <import-file></import-file>
       <Divider type="vertical" />
       <Button type="text" to="/template" target="_blank">全部模板</Button>
+      <Button type="text" @click="loadLocalTemplate">小红书多产品模板</Button>
       <Divider type="vertical" />
 
       <myTemplName></myTemplName>
@@ -53,6 +54,18 @@ import waterMark from '@/components/waterMark.vue';
 import login from '@/components/login';
 import admin from '@/components/admin';
 import history from '@/components/history.vue';
+import useSelect from '@/hooks/select';
+import { xiaohongshuProducts } from '@/templates/xiaohongshuProducts';
+import { Modal } from 'view-ui-plus';
+
+const { canvasEditor } = useSelect();
+const loadLocalTemplate = () => {
+  Modal.confirm({
+    title: '加载本地模板',
+    content: '当前画布内容将被替换，确定继续吗？',
+    onOk: () => canvasEditor.loadJSON(xiaohongshuProducts),
+  });
+};
 
 const props = defineProps(['ruler']);
 const emit = defineEmits(['update:ruler']);
