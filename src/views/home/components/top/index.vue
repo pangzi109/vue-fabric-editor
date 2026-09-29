@@ -60,6 +60,7 @@ import { xiaohongshuProducts } from '@/templates/xiaohongshuProducts';
 import { Modal } from 'view-ui-plus';
 import { Utils } from '@kuaitu/core';
 import { fabric } from 'fabric';
+import { preprocessProductImage } from '@/utils/imagePreprocess';
 
 const { canvasEditor } = useSelect();
 const { getImgStr, selectFiles, insertImgFile } = Utils;
@@ -92,15 +93,21 @@ const fillProductImages = async () => {
 
       const fileStr = await getImgStr(file);
       const imgEl = (await insertImgFile(fileStr as string)) as HTMLImageElement;
+      const source = preprocessProductImage(imgEl);
+      const preparedEl =
+        source === imgEl.src ? imgEl : ((await insertImgFile(source)) as HTMLImageElement);
       const width = product.getScaledWidth();
       const height = product.getScaledHeight();
       const center = product.getCenterPoint();
 
       await new Promise<void>((resolve) => {
-        product.setSrc(imgEl.src, () => {
-          const scale = Math.min(width / imgEl.naturalWidth, height / imgEl.naturalHeight);
+        product.setSrc(preparedEl.src, () => {
+          const scale = Math.min(
+            width / preparedEl.naturalWidth,
+            height / preparedEl.naturalHeight
+          );
           product.set({ scaleX: scale, scaleY: scale });
-          product.set('originSrc', imgEl.src);
+          product.set('originSrc', preparedEl.src);
           product.setPositionByOrigin(center, 'center', 'center');
           product.setCoords();
           canvas.renderAll();
@@ -108,6 +115,7 @@ const fillProductImages = async () => {
         });
       });
       imgEl.remove();
+      if (preparedEl !== imgEl) preparedEl.remove();
     }
     canvasEditor.saveState();
   } catch (error) {

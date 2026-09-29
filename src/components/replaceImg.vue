@@ -18,6 +18,7 @@
 import useSelect from '@/hooks/select';
 
 import { Utils } from '@kuaitu/core';
+import { preprocessProductImage } from '@/utils/imagePreprocess';
 const { getImgStr, selectFiles, insertImgFile } = Utils;
 
 const update = getCurrentInstance();
@@ -36,16 +37,23 @@ const repleace = async () => {
     const fileStr = await getImgStr(file);
     // 字符串转El
     const imgEl = await insertImgFile(fileStr);
+    const isProduct = /^product-[1-5]$/.test(activeObject.id || '');
+    const source = isProduct ? preprocessProductImage(imgEl) : imgEl.src;
+    const preparedEl = source === imgEl.src ? imgEl : await insertImgFile(source);
     const width = activeObject.getScaledWidth();
     const height = activeObject.getScaledHeight();
-    activeObject.setSrc(imgEl.src, () => {
-      const scale = Math.min(width / imgEl.width, height / imgEl.height);
+    const center = activeObject.getCenterPoint();
+    activeObject.setSrc(preparedEl.src, () => {
+      const scale = Math.min(width / preparedEl.naturalWidth, height / preparedEl.naturalHeight);
       activeObject.set({ scaleX: scale, scaleY: scale });
-      activeObject.set('originSrc', imgEl.src);
+      activeObject.set('originSrc', preparedEl.src);
+      if (isProduct) activeObject.setPositionByOrigin(center, 'center', 'center');
       activeObject.setCoords();
       canvasEditor.canvas.renderAll();
+      canvasEditor.saveState();
     });
     imgEl.remove();
+    if (preparedEl !== imgEl) preparedEl.remove();
   }
 };
 
